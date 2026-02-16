@@ -1,0 +1,19 @@
+[
+    {
+      "property_id": 1,
+      "name": "GreenView Apartments",
+      "location": "Bangalore",
+      "purchase_price": 5000000,
+      "monthly_rent": 60000,
+      "maintenance": 8000
+    },
+    {
+      "property_id": 2,
+      "name": "Sunrise Residency",
+      "location": "Pune",
+      "purchase_price": 4200000,
+      "monthly_rent": 52000,
+      "maintenance": 7000
+    }
+  ]
+  
