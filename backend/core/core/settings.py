@@ -125,3 +125,12 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOW_ALL_ORIGINS = True
+
+# ─── Blockchain Configuration ───
+import os
+BLOCKCHAIN_RPC_URL = os.environ.get('BLOCKCHAIN_RPC_URL', 'https://sepolia.infura.io/v3/YOUR_KEY')
+PLATFORM_PRIVATE_KEY = os.environ.get('PLATFORM_PRIVATE_KEY', '')
+PROPERTY_TOKEN_ADDRESS = os.environ.get('PROPERTY_TOKEN_ADDRESS', '')
+# Path to ABI file (copied from Hardhat artifacts)
+PROPERTY_TOKEN_ABI_PATH = BASE_DIR / 'contracts' / 'PropertyToken.json'
+

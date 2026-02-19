@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import {
-  getPropertyOwnership,
-  getPropertyPayouts,
-  getPropertyProposals,
-  voteOnProposal,
+    getPropertyOwnership,
+    getPropertyPayouts,
+    getPropertyProposals,
+    voteOnProposal,
 } from "../api/api";
+import OwnershipPie from "../components/OwnershipPie";
 
 export default function PropertyDetail({ property, onBack }) {
   const [ownerships, setOwnerships] = useState([]);
@@ -45,6 +46,8 @@ export default function PropertyDetail({ property, onBack }) {
           ))}
         </tbody>
       </table>
+
+      {ownerships.length > 0 && <OwnershipPie ownerships={ownerships} />}
 
       {/* ================= PAYOUTS ================= */}
       <h3>Rent Payout History</h3>
@@ -95,8 +98,8 @@ export default function PropertyDetail({ property, onBack }) {
             <p>👎 Against: {p.votes_against}</p>
 
             <button
-              onClick={() => {
-                voteOnProposal(p.id, true);
+              onClick={async () => {
+                await voteOnProposal(p.id, true);
                 getPropertyProposals(property.id).then(setProposals);
               }}
             >
@@ -105,8 +108,8 @@ export default function PropertyDetail({ property, onBack }) {
 
             <button
               style={{ marginLeft: "10px" }}
-              onClick={() => {
-                voteOnProposal(p.id, false);
+              onClick={async () => {
+                await voteOnProposal(p.id, false);
                 getPropertyProposals(property.id).then(setProposals);
               }}
             >

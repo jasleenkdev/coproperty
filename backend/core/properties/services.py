@@ -1,26 +1,8 @@
-from .models import Ownership, RentPayout
-
-TOTAL_TOKENS = 1000
-
-def distribute_rent(property_obj):
-    net_rent = property_obj.monthly_rent - property_obj.maintenance_cost
-    ownerships = Ownership.objects.filter(property=property_obj)
-
-    for ownership in ownerships:
-        share = ownership.tokens_owned / TOTAL_TOKENS
-        payout_amount = share * net_rent
-
-        RentPayout.objects.create(
-            user=ownership.user,
-            property=property_obj,
-            amount=round(payout_amount, 2)
-        )
-
-
 from django.utils.timezone import now
-from .models import Ownership, RentPayout
+from .models import Ownership, RentPayout, Proposal, Vote
 
 TOTAL_TOKENS = 1000
+
 
 def distribute_rent(property_obj):
     current_month = now().date().replace(day=1)
@@ -40,7 +22,7 @@ def distribute_rent(property_obj):
         )
 
 
-from .models import Proposal, Vote, Ownership
+
 
 def cast_vote(proposal, user, vote_choice):
     ownership = Ownership.objects.get(

@@ -1,8 +1,12 @@
 from rest_framework import serializers
-from .models import Property
+from .models import Property, Ownership, RentPayout
+
 
 class PropertySerializer(serializers.ModelSerializer):
     roi = serializers.SerializerMethodField()
+    purchase_price = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=False)
+    monthly_rent = serializers.DecimalField(max_digits=10, decimal_places=2, coerce_to_string=False)
+    maintenance_cost = serializers.DecimalField(max_digits=10, decimal_places=2, coerce_to_string=False)
 
     class Meta:
         model = Property
@@ -17,9 +21,8 @@ class PropertySerializer(serializers.ModelSerializer):
         ]
 
     def get_roi(self, obj):
-        return obj.annual_roi()
+        return float(obj.annual_roi())
 
-from .models import Ownership, RentPayout
 
 class OwnershipSerializer(serializers.ModelSerializer):
     ownership_percentage = serializers.SerializerMethodField()
@@ -33,6 +36,8 @@ class OwnershipSerializer(serializers.ModelSerializer):
 
 
 class RentPayoutSerializer(serializers.ModelSerializer):
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2, coerce_to_string=False)
+
     class Meta:
         model = RentPayout
         fields = ['user', 'property', 'amount', 'month']

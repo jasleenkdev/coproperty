@@ -50,3 +50,10 @@ class ProposalAdmin(admin.ModelAdmin):
 @admin.register(Vote)
 class VoteAdmin(admin.ModelAdmin):
     list_display = ('user', 'proposal', 'vote', 'tokens_used')
+
+
+from .models import WalletProfile
+
+@admin.register(WalletProfile)
+class WalletProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'wallet_address', 'created_at')

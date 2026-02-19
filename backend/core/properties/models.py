@@ -1,12 +1,16 @@
-# properties/models.py
 from django.db import models
+from django.contrib.auth.models import User
+from django.utils.timezone import now
+from django.core.exceptions import ValidationError
+import re
+
 
 class Property(models.Model):
     name = models.CharField(max_length=100)
     location = models.CharField(max_length=100)
-    purchase_price = models.FloatField()
-    monthly_rent = models.FloatField()
-    maintenance_cost = models.FloatField()
+    purchase_price = models.DecimalField(max_digits=12, decimal_places=2)
+    monthly_rent = models.DecimalField(max_digits=10, decimal_places=2)
+    maintenance_cost = models.DecimalField(max_digits=10, decimal_places=2)
 
     def annual_roi(self):
         net_annual = (self.monthly_rent - self.maintenance_cost) * 12
@@ -15,8 +19,6 @@ class Property(models.Model):
     def __str__(self):
         return self.name
 
-
-from django.contrib.auth.models import User
 
 class Ownership(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -33,22 +35,11 @@ class Ownership(models.Model):
     def __str__(self):
         return f"{self.user.username} owns {self.tokens_owned} tokens of {self.property.name}"
 
-class RentPayout(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    property = models.ForeignKey(Property, on_delete=models.CASCADE)
-    amount = models.FloatField()
-    month = models.DateField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.user.username} - {self.property.name} - ₹{self.amount}"
-
-
-from django.utils.timezone import now
 
 class RentPayout(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     property = models.ForeignKey(Property, on_delete=models.CASCADE)
-    amount = models.FloatField()
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
     month = models.DateField(default=now)
 
     class Meta:
@@ -88,3 +79,16 @@ class Vote(models.Model):
 
     def __str__(self):
         return f"{self.user.username} voted on {self.proposal.title}"
+
+class WalletProfile(models.Model):
+    """Links a Django user to their blockchain wallet address."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='wallet')
+    wallet_address = models.CharField(max_length=42, unique=True)  # 0x + 40 hex chars
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} -> {self.wallet_address}"
+
+    def clean(self):
+        if not re.match(r'^0x[0-9a-fA-F]{40}$', self.wallet_address):
+            raise ValidationError("Invalid Ethereum address format")
