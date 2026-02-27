@@ -1,5 +1,15 @@
 # properties/models.py
 from django.db import models
+from django.db import models
+from django.contrib.auth.models import User
+
+class WalletNonce(models.Model):
+    wallet_address = models.CharField(max_length=42, unique=True)
+    nonce = models.CharField(max_length=100)
+
+    def get_or_create_user(self):
+        user, _ = User.objects.get_or_create(username=self.wallet_address)
+        return user
 
 class Property(models.Model):
     name = models.CharField(max_length=100)

@@ -12,8 +12,29 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+CONTRACT_ABI_PATH = os.path.join(
+    BASE_DIR.parent,  # go up from core/
+    "blockchain",
+    "artifacts",
+    "contracts",
+    "PropertyToken.sol",
+    "PropertyToken.json",
+)
+
+load_dotenv(BASE_DIR / ".env")
+ALCHEMY_RPC_URL = os.getenv("ALCHEMY_RPC_URL")
+CONTRACT_ADDRESS = os.getenv("CONTRACT_ADDRESS")
+PRIVATE_KEY = os.getenv("PRIVATE_KEY")
+BACKEND_WALLET_ADDRESS = os.getenv("BACKEND_WALLET_ADDRESS")
+CONTRACT_ABI_PATH = "/Users/jasleenkaur/projects/community/backend/blockchain/artifacts/contracts/PropertyToken.sol/PropertyToken.json"
+
 
 
 # Quick-start development settings - unsuitable for production
@@ -40,6 +61,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'properties',
     'corsheaders',
+    
 ]
 
 MIDDLEWARE = [

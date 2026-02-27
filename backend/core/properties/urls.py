@@ -1,4 +1,11 @@
 from django.urls import path
+from django.urls import path
+from .views import get_nonce, wallet_login
+
+urlpatterns = [
+    path("auth/nonce", get_nonce),
+    path("auth/login/", wallet_login),
+]
 from .views import (
     property_list,
     property_roi,

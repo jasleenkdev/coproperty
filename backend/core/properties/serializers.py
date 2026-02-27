@@ -1,5 +1,11 @@
+from decimal import Decimal
 from rest_framework import serializers
-from .models import Property
+from .models import Property, Ownership, RentPayout
+
+
+# ==============================
+# Property Serializer
+# ==============================
 
 class PropertySerializer(serializers.ModelSerializer):
     roi = serializers.SerializerMethodField()
@@ -13,26 +19,52 @@ class PropertySerializer(serializers.ModelSerializer):
             'purchase_price',
             'monthly_rent',
             'maintenance_cost',
+            'contract_address',      # ERC-20 contract for this property
+            'total_token_supply',    # Cached from blockchain
             'roi',
         ]
 
     def get_roi(self, obj):
         return obj.annual_roi()
 
-from .models import Ownership, RentPayout
+
+# ==============================
+# Ownership Serializer (Indexed from Blockchain)
+# ==============================
 
 class OwnershipSerializer(serializers.ModelSerializer):
     ownership_percentage = serializers.SerializerMethodField()
 
     class Meta:
         model = Ownership
-        fields = ['user', 'tokens_owned', 'ownership_percentage']
+        fields = [
+            'wallet_address',
+            'property',
+            'tokens_owned',
+            'ownership_percentage'
+        ]
 
     def get_ownership_percentage(self, obj):
-        return obj.ownership_percentage()
+        total_supply = Decimal(obj.property.total_token_supply or 0)
+        tokens = Decimal(obj.tokens_owned or 0)
 
+        if total_supply == 0:
+            return Decimal('0')
+
+        return (tokens / total_supply) * Decimal('100')
+
+
+# ==============================
+# Rent Payout Serializer (Wallet-Based)
+# ==============================
 
 class RentPayoutSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = RentPayout
-        fields = ['user', 'property', 'amount', 'month']
+        fields = [
+            'wallet_address',
+            'property',
+            'amount',
+            'month'
+        ]

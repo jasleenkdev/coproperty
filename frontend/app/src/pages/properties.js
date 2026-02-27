@@ -1,45 +1,40 @@
-import { useEffect, useState } from "react";
-import { getProperties } from "../api/api";
-import PropertyDetail from "./PropertyDetail";
+import { useEffect, useState, useContext } from "react";
+import { WalletContext } from "../context/WalletContext";
+import { getTokenBalance } from "../services/web3";
+import abi from "../contracts/PropertyTokenABI.json";
 
-export default function Properties() {
-  const [properties, setProperties] = useState([]);
-  const [selectedProperty, setSelectedProperty] = useState(null);
+export default function PropertyDetail({ property, onBack }) {
+  const { address } = useContext(WalletContext);
+  const [balance, setBalance] = useState(null);
 
   useEffect(() => {
-    getProperties().then(setProperties);
-  }, []);
+    async function fetchBalance() {
+      if (!address) return;
 
-  if (selectedProperty) {
-    return (
-      <PropertyDetail
-        property={selectedProperty}
-        onBack={() => setSelectedProperty(null)}
-      />
-    );
-  }
+      const tokenBalance = await getTokenBalance(
+        property.contract_address,
+        abi,
+        address
+      );
+
+      setBalance(tokenBalance);
+    }
+
+    fetchBalance();
+  }, [address, property]);
 
   return (
     <div style={{ padding: "20px" }}>
-      <h1>Community Properties</h1>
+      <button onClick={onBack}>⬅ Back</button>
 
-      {properties.map((p) => (
-        <div
-          key={p.id}
-          onClick={() => setSelectedProperty(p)}
-          style={{
-            border: "1px solid #ddd",
-            padding: "12px",
-            marginBottom: "10px",
-            borderRadius: "6px",
-            cursor: "pointer",
-          }}
-        >
-          <h3>{p.name}</h3>
-          <p>📍 {p.location}</p>
-          <p>📈 ROI: {p.roi.toFixed(2)}%</p>
-        </div>
-      ))}
+      <h2>{property.name}</h2>
+      <p>📍 {property.location}</p>
+
+      {address ? (
+        <p>🪙 Your Tokens: {balance ?? "Loading..."}</p>
+      ) : (
+        <p>Connect wallet to see ownership</p>
+      )}
     </div>
   );
 }
