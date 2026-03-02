@@ -1,9 +1,6 @@
-import hre from "hardhat";
+import { ethers } from "hardhat";
 
 async function main() {
-  const connection = await hre.network.connect();
-  const ethers = connection.ethers;
-
   const [deployer] = await ethers.getSigners();
 
   console.log("Deploying from:", deployer.address);
@@ -19,7 +16,9 @@ async function main() {
 
   await contract.waitForDeployment();
 
-  console.log("Contract deployed at:", await contract.getAddress());
+  const address = contract.target;   // ✅ Correct for ethers v6
+
+  console.log("Contract deployed at:", address);
 }
 
 main().catch((error) => {

@@ -1,52 +1,82 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Property
-from .serializers import PropertySerializer
+from rest_framework import status
+
 from django.shortcuts import get_object_or_404
-import secrets
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from .models import WalletNonce
+from django.contrib.auth.models import User
+
 from eth_account.messages import encode_defunct
 from eth_account import Account
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework import status
+
+from .models import (
+    Property,
+    Ownership,
+    RentPayout,
+    Proposal,
+    Vote,
+    WalletNonce
+)
+
+from .serializers import (
+    PropertySerializer,
+    OwnershipSerializer,
+    RentPayoutSerializer
+)
+
 from properties.services.blockchain import mint_tokens
 
+import secrets
 
-def perform_create(self, serializer):
-    property = serializer.save()
 
-    tx_hash = mint_tokens(
-        property.contract_address,
-        ABI,
-        admin_wallet,
-        1000 * 10**18
-    )
-
-    property.mint_tx_hash = tx_hash
-    property.save()
+# ========================= BUY TOKENS =========================
 
 @api_view(['POST'])
-def wallet_login(request):
-    wallet = request.data.get("wallet_address")
-    signature = request.data.get("signature")
+def buy_tokens(request, pk):
+    try:
+        property_obj = get_object_or_404(Property, pk=pk)
 
-    nonce_obj = WalletNonce.objects.get(wallet_address=wallet)
+        wallet_address = request.data.get("wallet_address")
+        amount = int(request.data.get("amount"))
 
-    message = encode_defunct(text=nonce_obj.nonce)
-    recovered_address = Account.recover_message(message, signature=signature)
+        if amount <= 0:
+            return Response(
+                {"error": "Invalid token amount"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-    if recovered_address.lower() != wallet.lower():
-        return Response({"error": "Invalid signature"}, status=status.HTTP_400_BAD_REQUEST)
+        # ✅ Call mint ONLY ONCE
+        try:
+            tx_hash = mint_tokens(wallet_address, amount)
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
 
-    user = nonce_obj.get_or_create_user()
-    refresh = RefreshToken.for_user(user)
+        user = request.user if request.user.is_authenticated else User.objects.first()
 
-    return Response({
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-    })
+        ownership, created = Ownership.objects.get_or_create(
+            user=user,
+            property=property_obj,
+            defaults={"tokens_owned": amount}
+        )
+
+        if not created:
+            ownership.tokens_owned += amount
+            ownership.save()
+
+        return Response({
+            "message": "Tokens minted successfully",
+            "tx_hash": tx_hash,
+            "tokens_owned": ownership.tokens_owned
+        })
+
+    except Exception as e:
+        return Response(
+            {"error": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+# ========================= AUTH =========================
 
 @api_view(['GET'])
 def get_nonce(request):
@@ -59,6 +89,31 @@ def get_nonce(request):
     )
 
     return Response({'nonce': nonce})
+
+
+@api_view(['POST'])
+def wallet_login(request):
+    wallet = request.data.get("wallet_address")
+    signature = request.data.get("signature")
+
+    nonce_obj = WalletNonce.objects.get(wallet_address=wallet)
+
+    message = encode_defunct(text=nonce_obj.nonce)
+    recovered_address = Account.recover_message(message, signature=signature)
+
+    if recovered_address.lower() != wallet.lower():
+        return Response({"error": "Invalid signature"}, status=400)
+
+    user = nonce_obj.get_or_create_user()
+    refresh = RefreshToken.for_user(user)
+
+    return Response({
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+    })
+
+
+# ========================= PROPERTY =========================
 
 @api_view(['GET'])
 def property_list(request):
@@ -75,8 +130,6 @@ def property_roi(request, pk):
         "roi": property.annual_roi()
     })
 
-from .models import Ownership, RentPayout
-from .serializers import OwnershipSerializer, RentPayoutSerializer
 
 @api_view(['GET'])
 def property_ownership(request, pk):
@@ -99,9 +152,34 @@ def user_payouts(request, user_id):
     return Response(serializer.data)
 
 
-from .models import Proposal, Vote
-from .services_old import cast_vote, proposal_result
-from django.contrib.auth.models import User
+# ========================= GOVERNANCE =========================
+
+def cast_vote(proposal, user, vote_choice):
+    ownership = Ownership.objects.get(
+        user=user,
+        property=proposal.property
+    )
+
+    Vote.objects.create(
+        proposal=proposal,
+        user=user,
+        vote=vote_choice,
+        tokens_used=ownership.tokens_owned
+    )
+
+
+def proposal_result(proposal):
+    votes = Vote.objects.filter(proposal=proposal)
+
+    votes_for = sum(v.tokens_used for v in votes if v.vote)
+    votes_against = sum(v.tokens_used for v in votes if not v.vote)
+
+    return {
+        "votes_for": votes_for,
+        "votes_against": votes_against,
+        "approved": votes_for > votes_against
+    }
+
 
 @api_view(['GET'])
 def property_proposals(request, pk):
@@ -125,8 +203,8 @@ def property_proposals(request, pk):
 
 @api_view(['POST'])
 def vote_on_proposal(request, proposal_id):
-    user = request.user or User.objects.first()
-    vote_choice = request.data.get("vote")  # true / false
+    user = request.user if request.user.is_authenticated else User.objects.first()
+    vote_choice = request.data.get("vote")
 
     proposal = Proposal.objects.get(id=proposal_id)
     cast_vote(proposal, user, vote_choice)

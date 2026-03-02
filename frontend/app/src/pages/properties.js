@@ -1,40 +1,35 @@
-import { useEffect, useState, useContext } from "react";
-import { WalletContext } from "../context/WalletContext";
-import { getTokenBalance } from "../services/web3";
-import abi from "../contracts/PropertyTokenABI.json";
+import { useEffect, useState } from "react";
 
-export default function PropertyDetail({ property, onBack }) {
-  const { address } = useContext(WalletContext);
-  const [balance, setBalance] = useState(null);
+export default function Properties({ onSelect }) {
+  const [properties, setProperties] = useState([]);
 
   useEffect(() => {
-    async function fetchBalance() {
-      if (!address) return;
-
-      const tokenBalance = await getTokenBalance(
-        property.contract_address,
-        abi,
-        address
-      );
-
-      setBalance(tokenBalance);
-    }
-
-    fetchBalance();
-  }, [address, property]);
+    fetch("http://127.0.0.1:8000/properties/")
+      .then((res) => res.json())
+      .then((data) => setProperties(data));
+  }, []);
 
   return (
     <div style={{ padding: "20px" }}>
-      <button onClick={onBack}>⬅ Back</button>
+      <h2>Available Properties</h2>
 
-      <h2>{property.name}</h2>
-      <p>📍 {property.location}</p>
-
-      {address ? (
-        <p>🪙 Your Tokens: {balance ?? "Loading..."}</p>
-      ) : (
-        <p>Connect wallet to see ownership</p>
-      )}
+      {properties.map((p) => (
+        <div
+          key={p.id}
+          onClick={() => onSelect(p)}
+          style={{
+            border: "1px solid #ccc",
+            padding: "12px",
+            marginBottom: "12px",
+            borderRadius: "6px",
+            cursor: "pointer",
+          }}
+        >
+          <h3>{p.name}</h3>
+          <p>📍 {p.location}</p>
+          <p>📈 ROI: {p.roi.toFixed(2)}%</p>
+        </div>
+      ))}
     </div>
   );
 }

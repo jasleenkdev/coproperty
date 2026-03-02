@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract PropertyToken is ERC20, Ownable {
 
     uint256 public propertyId;
-    uint256 public constant MAX_SUPPLY = 1000 * 10 ** 18;
+    uint256 public constant MAX_SUPPLY = 1000 * 10**18;
 
     constructor(
         string memory name_,
@@ -17,7 +17,7 @@ contract PropertyToken is ERC20, Ownable {
     ) ERC20(name_, symbol_) Ownable(treasuryWallet) {
 
         propertyId = _propertyId;
-        _mint(treasuryWallet, MAX_SUPPLY);
+        // _mint(treasuryWallet, MAX_SUPPLY);
     }
 
     function burn(uint256 amount) external {

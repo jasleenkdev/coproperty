@@ -18,9 +18,7 @@ class PropertySerializer(serializers.ModelSerializer):
             'location',
             'purchase_price',
             'monthly_rent',
-            'maintenance_cost',
-            'contract_address',      # ERC-20 contract for this property
-            'total_token_supply',    # Cached from blockchain
+            'maintenance_cost',    
             'roi',
         ]
 

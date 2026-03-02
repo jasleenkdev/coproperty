@@ -1,70 +1,254 @@
-# Getting Started with Create React App
+# 🏠 Community-Owned Property Platform
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A full-stack Web2 + Web3 real estate platform where multiple users can collectively invest in properties using blockchain-backed tokenization.
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+# 🚀 Tech Stack
 
-### `npm start`
+## Backend (Web2)
+- Django
+- Django REST Framework
+- SQLite (Development)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Blockchain (Web3)
+- Solidity
+- Hardhat
+- Alchemy RPC
+- Ethers.js
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Frontend
+- React
+- Web3 Wallet Integration
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+# 📦 Project Structure
 
-### `npm run build`
+```
+community/
+│
+├── backend/
+│   ├── core/               # Django backend
+│   ├── blockchain/         # Smart contracts + Hardhat
+│   └── .env.example
+│
+├── frontend/
+│   └── app/                # React frontend
+│
+└── README.md
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+# 🛠️ Full Setup Guide
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Follow these steps after cloning the repository.
 
-### `npm run eject`
+---
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+# 1️⃣ Clone Repository
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```bash
+git clone <your-repo-url>
+cd community
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+---
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+# 2️⃣ Backend Setup (Django)
 
-## Learn More
+## Step 1: Create Virtual Environment
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```bash
+cd backend/core
+python -m venv env
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Mac/Linux:
+```bash
+source env/bin/activate
+```
 
-### Code Splitting
+Windows:
+```bash
+env\Scripts\activate
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+---
 
-### Analyzing the Bundle Size
+## Step 2: Install Dependencies
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```bash
+pip install -r requirements.txt
+```
 
-### Making a Progressive Web App
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Step 3: Configure Environment Variables
 
-### Advanced Configuration
+Copy the example file:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+```bash
+cp ../.env.example .env
+```
 
-### Deployment
+Update `.env` with your values:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+```
+SECRET_KEY=your-django-secret-key
+DEBUG=True
+ALCHEMY_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_KEY
+PRIVATE_KEY=your_wallet_private_key
+CONTRACT_ADDRESS=deployed_contract_address
+```
 
-### `npm run build` fails to minify
+⚠️ Never commit `.env`.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+---
+
+## Step 4: Run Migrations
+
+```bash
+python manage.py migrate
+```
+
+Optional:
+
+```bash
+python manage.py createsuperuser
+```
+
+---
+
+## Step 5: Start Backend Server
+
+```bash
+python manage.py runserver
+```
+
+Backend runs at:
+
+```
+http://127.0.0.1:8000
+```
+
+---
+
+# 3️⃣ Blockchain Setup (Hardhat)
+
+Open a new terminal:
+
+```bash
+cd backend/blockchain
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Compile contracts:
+
+```bash
+npx hardhat compile
+```
+
+Deploy (if needed):
+
+```bash
+npx hardhat run scripts/deploy.ts --network sepolia
+```
+
+After deployment, update `CONTRACT_ADDRESS` in `.env`.
+
+---
+
+# 4️⃣ Frontend Setup (React)
+
+Open new terminal:
+
+```bash
+cd frontend/app
+npm install
+npm start
+```
+
+Frontend runs at:
+
+```
+http://localhost:3000
+```
+
+---
+
+# 🔐 Environment Variables Required
+
+| Variable | Description |
+|----------|-------------|
+| SECRET_KEY | Django secret key |
+| ALCHEMY_RPC_URL | Alchemy RPC endpoint |
+| PRIVATE_KEY | Wallet private key (never share) |
+| CONTRACT_ADDRESS | Deployed smart contract address |
+
+---
+
+# 🌐 Web2 + Web3 Architecture
+
+- Django handles:
+  - Property listings
+  - Business logic
+  - REST APIs
+  - Database management
+
+- Smart contracts handle:
+  - Property tokenization
+  - Ownership tracking
+  - On-chain transactions
+
+- React frontend:
+  - Connects wallet
+  - Calls backend APIs
+  - Interacts with smart contracts
+
+---
+
+# ⚠️ Security Notes
+
+- `.env` is ignored by git
+- Private keys should never be committed
+- Use testnet for development
+- Rotate keys if accidentally exposed
+
+---
+
+# 🧪 Running From Scratch Checklist
+
+After cloning:
+
+- Create virtual environment
+- Install backend dependencies
+- Install blockchain dependencies
+- Install frontend dependencies
+- Configure `.env`
+- Run migrations
+- Start backend
+- Start frontend
+
+If everything works, setup is correct.
+
+---
+
+# 📌 Development Notes
+
+- SQLite is used for development only
+- For production, use PostgreSQL
+- Smart contracts are deployed on Sepolia testnet
+
+---
+
+# 🏁 Done
+
+Your full stack application should now be running locally.
+

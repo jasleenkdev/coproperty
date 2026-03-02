@@ -19,6 +19,7 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
 CONTRACT_ABI_PATH = os.path.join(
     BASE_DIR.parent,  # go up from core/
     "blockchain",
@@ -29,11 +30,21 @@ CONTRACT_ABI_PATH = os.path.join(
 )
 
 load_dotenv(BASE_DIR / ".env")
-ALCHEMY_RPC_URL = os.getenv("ALCHEMY_RPC_URL")
-CONTRACT_ADDRESS = os.getenv("CONTRACT_ADDRESS")
-PRIVATE_KEY = os.getenv("PRIVATE_KEY")
+RPC_URL = os.getenv("RPC_URL", "http://127.0.0.1:8545")
+
+CONTRACT_ADDRESS = os.getenv(
+    "CONTRACT_ADDRESS",
+    "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+)
+
+PRIVATE_KEY = os.getenv(
+    "PRIVATE_KEY",
+    "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+)
+
 BACKEND_WALLET_ADDRESS = os.getenv("BACKEND_WALLET_ADDRESS")
-CONTRACT_ABI_PATH = "/Users/jasleenkaur/projects/community/backend/blockchain/artifacts/contracts/PropertyToken.sol/PropertyToken.json"
+
+CONTRACT_ABI_PATH = BASE_DIR / "blockchain/artifacts/contracts/PropertyToken.sol/PropertyToken.json"
 
 
 
