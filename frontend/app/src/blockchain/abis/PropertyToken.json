@@ -1,0 +1,8 @@
+[
+  "function balanceOf(address account, uint256 id) view returns (uint256)",
+  "function claimableRent(address user, uint256 tokenId) view returns (uint256)",
+  "function claimRent(uint256 tokenId)",
+  "function depositRent(uint256 tokenId) payable",
+  "function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes data)",
+  "event RentClaimed(uint256 indexed tokenId, address indexed claimant, uint256 amount)"
+]
