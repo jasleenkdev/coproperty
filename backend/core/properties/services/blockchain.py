@@ -7,7 +7,7 @@ import json
 # Web3 Setup
 # ==============================
 
-w3 = Web3(Web3.HTTPProvider(settings.ALCHEMY_RPC_URL))
+w3 = Web3(Web3.HTTPProvider(settings.RPC_URL))
 
 with open(settings.CONTRACT_ABI_PATH) as f:
     artifact = json.load(f)

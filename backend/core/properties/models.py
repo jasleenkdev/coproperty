@@ -29,12 +29,12 @@ class Property(models.Model):
 from django.contrib.auth.models import User
 
 class Ownership(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    wallet_address = models.CharField(max_length=42)
     property = models.ForeignKey(Property, on_delete=models.CASCADE)
     tokens_owned = models.PositiveIntegerField()
 
     class Meta:
-        unique_together = ('user', 'property')
+        unique_together = ('wallet_address', 'property')
 
     def ownership_percentage(self):
         TOTAL_TOKENS = 1000

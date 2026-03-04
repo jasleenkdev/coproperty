@@ -21,7 +21,7 @@ class PropertyAdmin(admin.ModelAdmin):
 @admin.register(Ownership)
 class OwnershipAdmin(admin.ModelAdmin):
     list_display = (
-        'user',
+        'wallet_address',
         'property',
         'tokens_owned',
         'ownership_percentage_display',

@@ -6,7 +6,7 @@ from .views import (
     property_roi,
     property_ownership,
     property_payouts,
-    user_payouts,
+    wallet_payouts,
     property_proposals,
     vote_on_proposal,
     buy_tokens,   # ✅ NEW
@@ -27,7 +27,7 @@ urlpatterns = [
     path('properties/<int:pk>/buy/', buy_tokens),  # ✅ IMPORTANT
 
     # ================= USER =================
-    path('users/<int:user_id>/payouts/', user_payouts),
+    path("wallets/<str:wallet_address>/payouts/", wallet_payouts),
 
     # ================= GOVERNANCE =================
     path('properties/<int:pk>/proposals/', property_proposals),

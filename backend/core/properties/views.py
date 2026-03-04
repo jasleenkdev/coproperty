@@ -54,10 +54,11 @@ def buy_tokens(request, pk):
         user = request.user if request.user.is_authenticated else User.objects.first()
 
         ownership, created = Ownership.objects.get_or_create(
-            user=user,
-            property=property_obj,
-            defaults={"tokens_owned": amount}
+        wallet_address=wallet_address,
+        property=property_obj,
+        defaults={"tokens_owned": amount}
         )
+
 
         if not created:
             ownership.tokens_owned += amount
@@ -146,8 +147,8 @@ def property_payouts(request, pk):
 
 
 @api_view(['GET'])
-def user_payouts(request, user_id):
-    payouts = RentPayout.objects.filter(user_id=user_id)
+def wallet_payouts(request, wallet_address):
+    payouts = RentPayout.objects.filter(wallet_address=wallet_address)
     serializer = RentPayoutSerializer(payouts, many=True)
     return Response(serializer.data)
 
