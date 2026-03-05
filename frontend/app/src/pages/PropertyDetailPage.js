@@ -20,7 +20,7 @@ import {
   LoadingOverlay,
   PageLoader,
 } from "../components/ui";
-
+const API_BASE_URL = "http://localhost:8000";
 export default function PropertyDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -96,6 +96,28 @@ export default function PropertyDetail() {
         type: "error",
         message: error.message || "Failed to purchase tokens",
       });
+    } finally {
+      setBuyLoading(false);
+    }
+  };
+
+  const handleDistributeRent = async () => {
+    setBuyLoading(true); 
+    setAlert(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/properties/${property.id}/distribute-rent/`, {
+        method: "POST",
+      });
+      const data = await response.json();
+      
+      if (response.ok) {
+        setAlert({ type: "success", message: data.message });
+        fetchData(); // This refreshes the tables automatically
+      } else {
+        setAlert({ type: "error", message: data.error || "Failed to distribute rent" });
+      }
+    } catch (error) {
+      setAlert({ type: "error", message: "Server error occurred while distributing rent" });
     } finally {
       setBuyLoading(false);
     }
@@ -390,8 +412,16 @@ export default function PropertyDetail() {
 
           {/* Payout History */}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
               <CardTitle>Rent Payout History</CardTitle>
+              <Button 
+                onClick={handleDistributeRent} 
+                variant="outline" 
+                size="sm"
+                disabled={buyLoading}
+              >
+                {buyLoading ? "Distributing..." : "Distribute Rent"}
+              </Button>
             </CardHeader>
             {payouts.length > 0 ? (
               <div className="overflow-x-auto">
@@ -451,3 +481,4 @@ const COLORS = [
 function getColor(index) {
   return COLORS[index % COLORS.length];
 }
+

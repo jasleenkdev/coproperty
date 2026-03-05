@@ -1,0 +1,23 @@
+# Core Django
+Django==4.2.11
+
+# Django REST Framework
+djangorestframework==3.15.1
+
+# JWT Authentication
+djangorestframework-simplejwt==5.3.1
+
+# Blockchain interaction
+web3==6.15.1
+
+# Ethereum account signing / verification
+eth-account==0.10.0
+
+# Environment variable management
+python-dotenv==1.0.1
+
+# CORS support for React frontend
+django-cors-headers==4.3.1
+
+# Production WSGI server (optional but recommended)
+gunicorn==21.2.0

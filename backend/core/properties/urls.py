@@ -10,6 +10,7 @@ from .views import (
     property_proposals,
     vote_on_proposal,
     buy_tokens,   # ✅ NEW
+    distribute_rent,
 )
 
 urlpatterns = [
@@ -32,4 +33,6 @@ urlpatterns = [
     # ================= GOVERNANCE =================
     path('properties/<int:pk>/proposals/', property_proposals),
     path('proposals/<int:proposal_id>/vote/', vote_on_proposal),
+
+    path('properties/<int:pk>/distribute-rent/', distribute_rent), # ✅ NEW
 ]
