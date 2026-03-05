@@ -41,16 +41,8 @@ class Ownership(models.Model):
         return (self.tokens_owned / TOTAL_TOKENS) * 100
 
     def __str__(self):
-        return f"{self.user.username} owns {self.tokens_owned} tokens of {self.property.name}"
-
-class RentPayout(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    property = models.ForeignKey(Property, on_delete=models.CASCADE)
-    amount = models.FloatField()
-    month = models.DateField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.user.username} - {self.property.name} - ₹{self.amount}"
+        # Change 'self.user.username' to 'self.wallet_address'
+        return f"{self.wallet_address} owns {self.tokens_owned} tokens of {self.property.name}"
 
 
 from django.utils.timezone import now

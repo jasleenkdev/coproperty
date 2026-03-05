@@ -211,3 +211,43 @@ def vote_on_proposal(request, proposal_id):
     cast_vote(proposal, user, vote_choice)
 
     return Response({"status": "vote recorded"})
+
+# properties/views.py
+
+@api_view(['POST'])
+def distribute_rent(request, pk):
+    property_obj = get_object_or_404(Property, pk=pk)
+    
+    # Calculate Net Rent
+    net_rent = property_obj.monthly_rent - property_obj.maintenance_cost
+    
+    # Get all owners
+    ownerships = Ownership.objects.filter(property=property_obj)
+    
+    payout_count = 0
+    for ownership in ownerships:
+        # 1. Find the User associated with this wallet address
+        # Your WalletNonce model has a helper for this
+        try:
+            nonce_obj = WalletNonce.objects.get(wallet_address=ownership.wallet_address)
+            user = nonce_obj.get_or_create_user()
+        except WalletNonce.DoesNotExist:
+            # Fallback if no nonce object exists (useful for admin-created data)
+            user, _ = User.objects.get_or_create(username=ownership.wallet_address)
+
+        # 2. Calculate Share: (Tokens / 1000) * Net Rent
+        # Note: TOTAL_TOKENS is 1000 based on your Ownership model logic
+        share_amount = (ownership.tokens_owned / 1000) * net_rent
+        
+        if share_amount > 0:
+            # 3. Create Payout (The unique_together constraint in your model 
+            # will prevent duplicate payouts for the same month)
+            RentPayout.objects.get_or_create(
+                user=user,
+                property=property_obj,
+                amount=share_amount
+                # month defaults to now in your model
+            )
+            payout_count += 1
+            
+    return Response({"message": f"Successfully distributed rent to {payout_count} owners."})
