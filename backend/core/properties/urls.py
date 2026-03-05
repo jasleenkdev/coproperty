@@ -11,7 +11,8 @@ from .views import (
     vote_on_proposal,
     buy_tokens,   # ✅ NEW
     distribute_rent,
-    create_property_proposals
+    create_property_proposals,
+    property_create
 )
 
 urlpatterns = [
@@ -21,6 +22,7 @@ urlpatterns = [
 
     # ================= PROPERTIES =================
     path('properties/', property_list),
+    path('properties/create/', property_create),  # ✅ NEW
     path('properties/<int:pk>/roi/', property_roi),
     path('properties/<int:pk>/ownership/', property_ownership),
     path('properties/<int:pk>/payouts/', property_payouts),

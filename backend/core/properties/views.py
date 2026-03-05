@@ -124,7 +124,15 @@ def property_list(request):
     serializer = PropertySerializer(properties, many=True)
     print(serializer.data)
     return Response(serializer.data)
+@api_view(['POST'])
+def property_create(request):
+    serializer = PropertySerializer(data=request.data)
 
+    if serializer.is_valid():
+        property_obj = serializer.save()
+        return Response(PropertySerializer(property_obj).data, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def property_roi(request, pk):
