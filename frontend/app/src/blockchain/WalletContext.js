@@ -11,7 +11,11 @@ export function WalletProvider({ children }) {
   const [provider, setProvider] = useState(null);
   const [propertyToken, setPropertyToken] = useState(null);
   const [, setChainId] = useState(null);
-
+  const disconnectWallet = () => {
+    setAccount(null);
+    setProvider(null);
+    setPropertyToken(null);
+  };
   const connectWallet = async () => {
     if (!window.ethereum) {
       alert("Please install MetaMask!");
@@ -78,6 +82,7 @@ export function WalletProvider({ children }) {
         provider,
         propertyToken,
         connectWallet,
+        disconnectWallet,
         isConnected: !!account,
       }}
     >

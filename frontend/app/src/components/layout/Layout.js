@@ -21,7 +21,7 @@ export function Layout({ children }) {
 
 function Navbar() {
   const location = useLocation();
-  const { account, connectWallet, isConnected } = useWallet();
+ const { account, connectWallet, disconnectWallet, isConnected } = useWallet();
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
@@ -81,13 +81,21 @@ function Navbar() {
             </div>
 
             {isConnected ? (
-              <div className="flex items-center gap-2 px-4 py-2 bg-success-50 border border-success-200 rounded-xl">
-                <span className="w-2 h-2 bg-success-500 rounded-full" />
-                <span className="text-sm font-medium text-success-700">
-                  {account.slice(0, 6)}...{account.slice(-4)}
-                </span>
-              </div>
-            ) : (
+  <div className="flex items-center gap-2 px-4 py-2 bg-success-50 border border-success-200 rounded-xl">
+    <span className="w-2 h-2 bg-success-500 rounded-full" />
+
+    <span className="text-sm font-medium text-success-700">
+      {account.slice(0, 6)}...{account.slice(-4)}
+    </span>
+
+    <button
+      onClick={disconnectWallet}
+      className="ml-2 text-xs bg-white border border-gray-200 px-2 py-1 rounded hover:bg-gray-100"
+    >
+      Logout
+    </button>
+  </div>
+) : (
               <button
                 onClick={connectWallet}
                 className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium text-sm transition-colors"
