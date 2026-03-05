@@ -32,19 +32,35 @@ class PropertySerializer(serializers.ModelSerializer):
 
 class OwnershipSerializer(serializers.ModelSerializer):
     ownership_percentage = serializers.SerializerMethodField()
+    investor_name = serializers.SerializerMethodField()
+  
 
     class Meta:
         model = Ownership
         fields = [
-            'wallet_address',
+           'wallet_address', # Ensure this matches your models.py exactly
             'property',
             'tokens_owned',
-            'ownership_percentage'
+            'ownership_percentage',
+            'investor_name'
         ]
+        
+    def get_investor_name(self, obj):
+        try:
+            # Assuming the wallet_address is saved as the username in Django
+            from django.contrib.auth.models import User
+            user = User.objects.get(username=obj.wallet_address)
+            # Return their first name, or fallback to "Investor"
+            return user.first_name if user.first_name else "Investor"
+        except:
+            return "Anonymous"
 
     def get_ownership_percentage(self, obj):
-        total_supply = Decimal(1000 or 0)
-        tokens = Decimal(obj.tokens_owned or 0)
+        # Safely get the supply, default to 1000 if the field doesn't exist
+        total_supply = Decimal(getattr(obj.property, 'total_token_supply', 1000) or 1000)
+        
+        # Safely get tokens owned, default to 0
+        tokens = Decimal(getattr(obj, 'tokens_owned', 0) or 0)
 
         if total_supply == 0:
             return Decimal('0')
@@ -57,12 +73,13 @@ class OwnershipSerializer(serializers.ModelSerializer):
 # ==============================
 
 class RentPayoutSerializer(serializers.ModelSerializer):
+    investor_name = serializers.SerializerMethodField()
+    # This makes the wallet address directly available as a string
+    user_username = serializers.ReadOnlyField(source='user.username')
 
     class Meta:
         model = RentPayout
-        fields = [
-            'wallet_address',
-            'property',
-            'amount',
-            'month'
-        ]
+        fields = ['user', 'user_username', 'property', 'amount', 'month', 'investor_name']
+
+    def get_investor_name(self, obj):
+        return obj.user.first_name if obj.user.first_name else "Investor"

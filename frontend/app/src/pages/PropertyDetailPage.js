@@ -383,9 +383,11 @@ export default function PropertyDetail() {
                                 style={{ backgroundColor: getColor(index) }}
                               />
                               <span className="text-gray-700 font-medium">
-                                {o.wallet_address
-                                  ? `${o.wallet_address.slice(0, 6)}...${o.wallet_address.slice(-4)}`
-                                  : `User #${o.user}`}
+                                {o.investor_name && o.investor_name !== "Anonymous" && o.investor_name !== "Investor"
+                                  ? o.investor_name
+                                  : o.wallet_address
+                                    ? `${o.wallet_address.slice(0, 6)}...${o.wallet_address.slice(-4)}`
+                                    : `User #${o.user || 'Unknown'}`}
                               </span>
                             </div>
                           </td>
@@ -436,19 +438,23 @@ export default function PropertyDetail() {
                   <tbody className="divide-y divide-gray-50">
                     {payouts.slice(0, 10).map((p, index) => (
                       <tr key={index} className="text-sm">
-                        <td className="py-3 text-gray-700">
-                          {p.wallet_address
-                            ? `${p.wallet_address.slice(0, 6)}...${p.wallet_address.slice(-4)}`
-                            : `User #${p.user}`}
+                       <td className="py-3 text-gray-700 font-medium">
+                          {p.investor_name && p.investor_name !== "Anonymous" && p.investor_name !== "Investor"
+                            ? p.investor_name
+                            : typeof p.user === 'string'
+                              ? `${p.user.slice(0, 6)}...${p.user.slice(-4)}`
+                              : "Unknown"}
                         </td>
                         <td className="py-3 text-right font-medium text-success-600">
-                          {formatCurrency(p.amount)}
+                        {formatCurrency(p.amount)}
                         </td>
                         <td className="py-3 text-right text-gray-500">
-                          {new Date(p.month).toLocaleDateString("en-IN", {
-                            month: "short",
-                            year: "numeric",
-                          })}
+                          {p.month 
+                            ? new Date(p.month).toLocaleDateString("en-IN", {
+                                month: "short",
+                                year: "numeric",
+                              })
+                            : "Recent"}
                         </td>
                       </tr>
                     ))}
