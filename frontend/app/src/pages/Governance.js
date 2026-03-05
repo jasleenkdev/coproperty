@@ -13,12 +13,12 @@ import {
   Badge,
   Button,
   Card,
-  Input,
   Modal,
   PageLoader,
   Select,
   Spinner,
   TextArea,
+  Input,
 } from "../components/ui";
 
 const PROPOSAL_TYPES = [
@@ -35,7 +35,7 @@ export default function Governance() {
   const [properties, setProperties] = useState([]);
   const [proposals, setProposals] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [filter, setFilter] = useState("all"); // all, active, approved
+  const [filter, setFilter] = useState("all");
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -43,19 +43,20 @@ export default function Governance() {
       const props = await getProperties();
       setProperties(props);
 
-      // Fetch proposals for all properties
       const allProposals = [];
+
       for (const prop of props) {
         const propProposals = await getPropertyProposals(prop.id);
+
         propProposals.forEach((p) => {
           allProposals.push({
             ...p,
             property_id: prop.id,
             property_name: prop.name,
-            property_location: prop.location,
           });
         });
       }
+
       setProposals(allProposals);
     } catch (error) {
       console.error("Error fetching governance data:", error);
@@ -69,8 +70,9 @@ export default function Governance() {
   }, [fetchData]);
 
   const filteredProposals = proposals.filter((p) => {
-    if (filter === "active") return !p.approved && !p.is_executed;
-    if (filter === "approved") return p.approved;
+    if (filter === "active") return p.status === "ACTIVE";
+    if (filter === "approved") return p.status === "APPROVED";
+    if (filter === "rejected") return p.status === "REJECTED";
     return true;
   });
 
@@ -84,53 +86,38 @@ export default function Governance() {
         actions={
           isConnected && (
             <Button onClick={() => setShowCreateModal(true)}>
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
               Create Proposal
             </Button>
           )
         }
       />
 
-      {/* Filter Tabs */}
+      {/* Tabs */}
       <div className="flex gap-2 mb-6">
         {[
-          { key: "all", label: "All Proposals" },
+          { key: "all", label: "All" },
           { key: "active", label: "Active" },
           { key: "approved", label: "Approved" },
+          { key: "rejected", label: "Rejected" },
         ].map(({ key, label }) => (
           <button
             key={key}
             onClick={() => setFilter(key)}
-            className={`
-              px-4 py-2 rounded-lg text-sm font-medium transition-colors
-              ${
-                filter === key
-                  ? "bg-primary-600 text-white"
-                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-              }
-            `}
+            className={`px-4 py-2 rounded-lg text-sm font-medium ${
+              filter === key
+                ? "bg-primary-600 text-white"
+                : "bg-white border border-gray-200"
+            }`}
           >
             {label}
             {key !== "all" && (
-              <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-white/20">
+              <span className="ml-2 text-xs">
                 {
-                  proposals.filter((p) =>
-                    key === "active"
-                      ? !p.approved && !p.is_executed
-                      : p.approved,
-                  ).length
+                  proposals.filter((p) => {
+                    if (key === "active") return p.status === "ACTIVE";
+                    if (key === "approved") return p.status === "APPROVED";
+                    if (key === "rejected") return p.status === "REJECTED";
+                  }).length
                 }
               </span>
             )}
@@ -138,61 +125,30 @@ export default function Governance() {
         ))}
       </div>
 
-      {/* Not Connected Alert */}
       {!isConnected && (
         <Alert variant="warning" className="mb-6">
-          <strong>Connect your wallet</strong> to create proposals and vote on
-          decisions.
+          Connect wallet to vote.
         </Alert>
       )}
 
-      {/* Proposals List */}
       {filteredProposals.length > 0 ? (
         <div className="space-y-4">
           {filteredProposals.map((proposal) => (
             <ProposalCard
               key={proposal.id}
               proposal={proposal}
-              isConnected={isConnected}
               account={account}
+              isConnected={isConnected}
               onVote={fetchData}
             />
           ))}
         </div>
       ) : (
         <Card className="text-center py-16">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg
-              className="w-8 h-8 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            No Proposals Found
-          </h3>
-          <p className="text-gray-500 mb-6">
-            {filter === "all"
-              ? "Be the first to create a governance proposal"
-              : `No ${filter} proposals at the moment`}
-          </p>
-          {isConnected && filter === "all" && (
-            <Button onClick={() => setShowCreateModal(true)}>
-              Create First Proposal
-            </Button>
-          )}
+          No proposals found.
         </Card>
       )}
 
-      {/* Create Proposal Modal */}
       <CreateProposalModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
@@ -206,17 +162,19 @@ export default function Governance() {
   );
 }
 
-// Proposal Card Component
 function ProposalCard({ proposal, isConnected, account, onVote }) {
   const [voting, setVoting] = useState(false);
   const [voteError, setVoteError] = useState(null);
-  const [hasVoted, setHasVoted] = useState(false);
 
-  const totalVotes = proposal.votes_for + proposal.votes_against;
+  const totalWeight = proposal.total_weight;
+
+  const participation = proposal.votes_for + proposal.votes_against;
+
   const forPercentage =
-    totalVotes > 0 ? (proposal.votes_for / totalVotes) * 100 : 50;
+    totalWeight > 0 ? (proposal.votes_for / totalWeight) * 100 : 0;
+
   const againstPercentage =
-    totalVotes > 0 ? (proposal.votes_against / totalVotes) * 100 : 50;
+    totalWeight > 0 ? (proposal.votes_against / totalWeight) * 100 : 0;
 
   const handleVote = async (voteFor) => {
     if (!isConnected) return;
@@ -226,8 +184,8 @@ function ProposalCard({ proposal, isConnected, account, onVote }) {
 
     try {
       const result = await voteOnProposal(proposal.id, voteFor, account);
+
       if (result.success) {
-        setHasVoted(true);
         onVote();
       } else {
         setVoteError(result.error || "Vote failed");
@@ -239,222 +197,144 @@ function ProposalCard({ proposal, isConnected, account, onVote }) {
     }
   };
 
-  const getTypeLabel = (type) => {
-    const found = PROPOSAL_TYPES.find((t) => t.value === type);
-    return found ? found.label : type;
-  };
-
-  const getTypeBadgeVariant = (type) => {
-    switch (type) {
-      case "RENT_CHANGE":
-        return "primary";
-      case "MAINTENANCE":
-        return "warning";
-      case "SELL":
-        return "danger";
-      case "BUY":
-        return "success";
-      default:
-        return "default";
-    }
-  };
-
   return (
     <Card className="overflow-hidden">
       <div className="flex flex-col lg:flex-row">
-        {/* Main Content */}
         <div className="flex-1 p-6">
-          <div className="flex flex-wrap items-start gap-2 mb-3">
-            <Badge variant={getTypeBadgeVariant(proposal.proposal_type)}>
-              {getTypeLabel(proposal.proposal_type)}
-            </Badge>
-            {proposal.approved && (
-              <Badge variant="success" dot>
-                Approved
-              </Badge>
+          <div className="flex gap-2 mb-3">
+
+            {proposal.status === "ACTIVE" && (
+              <Badge variant="warning">Active</Badge>
             )}
-            {proposal.is_executed && <Badge variant="default">Executed</Badge>}
+
+            {proposal.status === "APPROVED" && (
+              <Badge variant="success">Approved</Badge>
+            )}
+
+            {proposal.status === "REJECTED" && (
+              <Badge variant="danger">Rejected</Badge>
+            )}
+
           </div>
 
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            {proposal.title}
-          </h3>
-          <p className="text-gray-600 text-sm mb-4">{proposal.description}</p>
+          <h3 className="text-lg font-semibold">{proposal.title}</h3>
+          <p className="text-gray-600 text-sm">{proposal.description}</p>
 
-          <div className="flex items-center gap-4 text-sm text-gray-500">
-            <div className="flex items-center gap-1.5">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                />
-              </svg>
-              {proposal.property_name}
-            </div>
-            {proposal.created_at && (
-              <div className="flex items-center gap-1.5">
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-                {new Date(proposal.created_at).toLocaleDateString()}
-              </div>
-            )}
-          </div>
+          <p className="text-sm text-gray-500 mt-2">
+            Property: {proposal.property_name}
+          </p>
         </div>
 
-        {/* Voting Section */}
-        <div className="lg:w-72 bg-gray-50 p-6 border-t lg:border-t-0 lg:border-l border-gray-100">
-          {/* Vote Progress */}
+        {/* Voting */}
+        <div className="lg:w-72 bg-gray-50 p-6 border-l">
+
           <div className="mb-4">
+
             <div className="flex justify-between text-sm mb-2">
-              <span className="text-success-600 font-medium">
+              <span className="text-green-600">
                 For: {proposal.votes_for}
               </span>
-              <span className="text-danger-600 font-medium">
+
+              <span className="text-red-600">
                 Against: {proposal.votes_against}
               </span>
             </div>
-            <div className="h-3 bg-gray-200 rounded-full overflow-hidden flex">
+
+            <div className="h-3 bg-gray-200 rounded-full flex overflow-hidden">
+
               <div
-                className="bg-success-500 transition-all duration-300"
+                className="bg-green-500"
                 style={{ width: `${forPercentage}%` }}
               />
+
               <div
-                className="bg-danger-500 transition-all duration-300"
+                className="bg-red-500"
                 style={{ width: `${againstPercentage}%` }}
               />
+
             </div>
+
             <p className="text-xs text-gray-400 mt-1 text-center">
-              Total: {totalVotes} votes
+              Participation: {participation} / {totalWeight}
             </p>
+
           </div>
 
-          {/* Vote Buttons */}
-          {!proposal.approved && !hasVoted && isConnected && (
-            <div className="space-y-2">
-              {voteError && (
-                <p className="text-xs text-danger-500 mb-2">{voteError}</p>
-              )}
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant="success"
-                  size="sm"
-                  onClick={() => handleVote(true)}
-                  disabled={voting}
-                  className="w-full"
-                >
-                  {voting ? <Spinner size="sm" /> : "👍 For"}
-                </Button>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() => handleVote(false)}
-                  disabled={voting}
-                  className="w-full"
-                >
-                  {voting ? <Spinner size="sm" /> : "👎 Against"}
-                </Button>
-              </div>
+          {proposal.status === "ACTIVE" && isConnected && (
+
+            <div className="grid grid-cols-2 gap-2">
+
+              <Button
+                variant="success"
+                size="sm"
+                disabled={voting}
+                onClick={() => handleVote(true)}
+              >
+                {voting ? <Spinner size="sm" /> : "👍 For"}
+              </Button>
+
+              <Button
+                variant="danger"
+                size="sm"
+                disabled={voting}
+                onClick={() => handleVote(false)}
+              >
+                {voting ? <Spinner size="sm" /> : "👎 Against"}
+              </Button>
+
             </div>
+
           )}
 
-          {hasVoted && (
-            <Alert variant="success" className="text-center">
-              <span className="text-xs">Vote recorded!</span>
-            </Alert>
-          )}
-
-          {proposal.approved && (
-            <div className="text-center">
-              <div className="w-12 h-12 bg-success-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <svg
-                  className="w-6 h-6 text-success-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <p className="text-sm font-medium text-success-600">
-                Proposal Approved
-              </p>
-            </div>
-          )}
-
-          {!isConnected && !proposal.approved && (
+          {!isConnected && proposal.status === "ACTIVE" && (
             <p className="text-xs text-gray-500 text-center">
               Connect wallet to vote
             </p>
           )}
+
+          {voteError && (
+            <p className="text-xs text-red-500 mt-2">{voteError}</p>
+          )}
+
         </div>
       </div>
     </Card>
   );
 }
 
-// Create Proposal Modal
 function CreateProposalModal({ isOpen, onClose, properties, onSuccess }) {
+
   const [formData, setFormData] = useState({
     propertyId: "",
     title: "",
     description: "",
     proposalType: "",
   });
+
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   const handleSubmit = async (e) => {
+
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
     try {
+
       const result = await createProposal(
         formData.propertyId,
         formData.title,
         formData.description,
-        formData.proposalType,
+        formData.proposalType
       );
 
       if (result.success) {
-        setFormData({
-          propertyId: "",
-          title: "",
-          description: "",
-          proposalType: "",
-        });
         onSuccess();
-      } else {
-        setError(result.error || "Failed to create proposal");
       }
-    } catch (err) {
-      setError(err.message);
+
     } finally {
       setLoading(false);
     }
+
   };
 
   const propertyOptions = properties.map((p) => ({
@@ -463,83 +343,55 @@ function CreateProposalModal({ isOpen, onClose, properties, onSuccess }) {
   }));
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Create New Proposal"
-      size="md"
-    >
-      <form onSubmit={handleSubmit}>
-        <div className="space-y-4">
-          {error && (
-            <Alert variant="error" onDismiss={() => setError(null)}>
-              {error}
-            </Alert>
-          )}
+    <Modal isOpen={isOpen} onClose={onClose} title="Create Proposal">
 
-          <Select
-            label="Property"
-            options={propertyOptions}
-            value={formData.propertyId}
-            onChange={(e) =>
-              setFormData({ ...formData, propertyId: e.target.value })
-            }
-            placeholder="Select a property"
-            required
-          />
+      <form onSubmit={handleSubmit} className="space-y-4">
 
-          <Select
-            label="Proposal Type"
-            options={PROPOSAL_TYPES}
-            value={formData.proposalType}
-            onChange={(e) =>
-              setFormData({ ...formData, proposalType: e.target.value })
-            }
-            placeholder="Select proposal type"
-            required
-          />
+        <Select
+          label="Property"
+          options={propertyOptions}
+          value={formData.propertyId}
+          onChange={(e) =>
+            setFormData({ ...formData, propertyId: e.target.value })
+          }
+          required
+        />
 
-          <Input
-            label="Title"
-            value={formData.title}
-            onChange={(e) =>
-              setFormData({ ...formData, title: e.target.value })
-            }
-            placeholder="Enter proposal title"
-            required
-          />
+        <Select
+          label="Proposal Type"
+          options={PROPOSAL_TYPES}
+          value={formData.proposalType}
+          onChange={(e) =>
+            setFormData({ ...formData, proposalType: e.target.value })
+          }
+          required
+        />
 
-          <TextArea
-            label="Description"
-            value={formData.description}
-            onChange={(e) =>
-              setFormData({ ...formData, description: e.target.value })
-            }
-            placeholder="Describe your proposal in detail..."
-            rows={4}
-            required
-          />
-        </div>
+        <Input
+          label="Title"
+          value={formData.title}
+          onChange={(e) =>
+            setFormData({ ...formData, title: e.target.value })
+          }
+          required
+        />
 
-        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            loading={loading}
-            disabled={
-              loading ||
-              !formData.propertyId ||
-              !formData.title ||
-              !formData.proposalType
-            }
-          >
-            {loading ? "Creating..." : "Create Proposal"}
-          </Button>
-        </div>
+        <TextArea
+          label="Description"
+          rows={4}
+          value={formData.description}
+          onChange={(e) =>
+            setFormData({ ...formData, description: e.target.value })
+          }
+          required
+        />
+
+        <Button type="submit" loading={loading}>
+          Create Proposal
+        </Button>
+
       </form>
+
     </Modal>
   );
 }

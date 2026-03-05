@@ -83,3 +83,20 @@ class RentPayoutSerializer(serializers.ModelSerializer):
 
     def get_investor_name(self, obj):
         return obj.user.first_name if obj.user.first_name else "Investor"
+
+
+from .models import Proposal
+class ProposalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Proposal
+        fields = [
+            "id",
+            "title",
+            "proposal_type",
+            "description",
+            "created_at",
+            "status",
+            "is_executed"
+        ]
+
+    

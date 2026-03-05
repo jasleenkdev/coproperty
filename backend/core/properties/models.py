@@ -67,8 +67,8 @@ class RentPayout(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.property.name} - {self.amount}"
 
-
 class Proposal(models.Model):
+
     PROPOSAL_TYPES = [
         ('RENT_CHANGE', 'Change Rent'),
         ('MAINTENANCE', 'Approve Maintenance'),
@@ -80,21 +80,30 @@ class Proposal(models.Model):
     title = models.CharField(max_length=200)
     proposal_type = models.CharField(max_length=20, choices=PROPOSAL_TYPES)
     description = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    is_executed = models.BooleanField(default=False)
 
-    def __str__(self):
-        return f"{self.title} ({self.property.name})"
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('ACTIVE','Active'),
+            ('APPROVED','Approved'),
+            ('REJECTED','Rejected')
+        ],
+        default='ACTIVE'
+    )
+
+    is_executed = models.BooleanField(default=False)
 
 
 class Vote(models.Model):
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    wallet_address = models.CharField(max_length=42)
     vote = models.BooleanField()  # True = FOR, False = AGAINST
     tokens_used = models.PositiveIntegerField()
 
     class Meta:
-        unique_together = ('proposal', 'user')
+        unique_together = ('proposal', 'wallet_address')
 
     def __str__(self):
-        return f"{self.user.username} voted on {self.proposal.title}"
+        return f"{self.wallet_address} voted on {self.proposal.title}"

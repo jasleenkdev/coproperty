@@ -11,6 +11,7 @@ from .views import (
     vote_on_proposal,
     buy_tokens,   # ✅ NEW
     distribute_rent,
+    create_property_proposals
 )
 
 urlpatterns = [
@@ -25,13 +26,14 @@ urlpatterns = [
     path('properties/<int:pk>/payouts/', property_payouts),
 
     # ================= BUY TOKENS =================
-    path('properties/<int:pk>/buy/', buy_tokens),  # ✅ IMPORTANT
+    path('properties/<int:pk>/buy/', buy_tokens),
 
     # ================= USER =================
     path("wallets/<str:wallet_address>/payouts/", wallet_payouts),
 
     # ================= GOVERNANCE =================
     path('properties/<int:pk>/proposals/', property_proposals),
+    path('properties/<int:pk>/create/proposals/', create_property_proposals),
     path('proposals/<int:proposal_id>/vote/', vote_on_proposal),
 
     path('properties/<int:pk>/distribute-rent/', distribute_rent), # ✅ NEW

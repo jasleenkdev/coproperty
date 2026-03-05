@@ -86,7 +86,7 @@ export const createProposal = async (
 ) => {
   try {
     const response = await fetch(
-      `${API_BASE}/properties/${propertyId}/proposals/`,
+      `${API_BASE}/properties/${propertyId}/create/proposals/`,
       {
         method: "POST",
         headers: {
@@ -129,6 +129,7 @@ export const voteOnProposal = async (
     if (!response.ok) {
       return { success: false, error: data.error || "Vote failed" };
     }
+    console.log(`data: ${JSON.stringify(data)}`);
     return { success: true, ...data };
   } catch (error) {
     return { success: false, error: error.message };

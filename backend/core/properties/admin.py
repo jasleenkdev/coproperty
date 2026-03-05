@@ -49,4 +49,4 @@ class ProposalAdmin(admin.ModelAdmin):
 
 @admin.register(Vote)
 class VoteAdmin(admin.ModelAdmin):
-    list_display = ('user', 'proposal', 'vote', 'tokens_used')
+    list_display = ('wallet_address', 'proposal', 'vote', 'tokens_used')

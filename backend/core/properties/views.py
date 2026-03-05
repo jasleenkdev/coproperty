@@ -1,10 +1,10 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-
+from .serializers import ProposalSerializer
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
-
+from django.db.models import Sum
 from eth_account.messages import encode_defunct
 from eth_account import Account
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -120,7 +120,9 @@ def wallet_login(request):
 @api_view(['GET'])
 def property_list(request):
     properties = Property.objects.all()
+    print(properties)
     serializer = PropertySerializer(properties, many=True)
+    print(serializer.data)
     return Response(serializer.data)
 
 
@@ -135,8 +137,12 @@ def property_roi(request, pk):
 
 @api_view(['GET'])
 def property_ownership(request, pk):
+
     ownerships = Ownership.objects.filter(property_id=pk)
     serializer = OwnershipSerializer(ownerships, many=True)
+    print(ownerships)
+    print(serializer.data)
+   
     return Response(serializer.data)
 
 
@@ -158,18 +164,30 @@ def wallet_payouts(request, wallet_address):
 
 # ========================= GOVERNANCE =========================
 
-def cast_vote(proposal, user, vote_choice):
+def cast_vote(proposal, wallet_address, vote_choice):
+
+    # prevent voting on closed proposal
+    if proposal.status != "ACTIVE":
+        raise Exception("Voting closed")
+
+    # get token ownership
     ownership = Ownership.objects.get(
-        user=user,
+        wallet_address=wallet_address,
         property=proposal.property
     )
 
+    # prevent double voting
+    if Vote.objects.filter(proposal=proposal, wallet_address=wallet_address).exists():
+        raise Exception("Wallet already voted")
+
     Vote.objects.create(
         proposal=proposal,
-        user=user,
+        wallet_address=wallet_address,
         vote=vote_choice,
         tokens_used=ownership.tokens_owned
     )
+
+    check_proposal_result(proposal)
 
 
 def proposal_result(proposal):
@@ -184,37 +202,113 @@ def proposal_result(proposal):
         "approved": votes_for > votes_against
     }
 
-
 @api_view(['GET'])
 def property_proposals(request, pk):
+
     proposals = Proposal.objects.filter(property_id=pk)
+
+    total_weight = Ownership.objects.filter(
+        property_id=pk
+    ).aggregate(
+        Sum("tokens_owned")
+    )["tokens_owned__sum"] or 0
+
     response = []
 
     for p in proposals:
-        result = proposal_result(p)
+
+        votes_for = Vote.objects.filter(
+            proposal=p,
+            vote=True
+        ).aggregate(
+            Sum("tokens_used")
+        )["tokens_used__sum"] or 0
+
+        votes_against = Vote.objects.filter(
+            proposal=p,
+            vote=False
+        ).aggregate(
+            Sum("tokens_used")
+        )["tokens_used__sum"] or 0
+
         response.append({
             "id": p.id,
             "title": p.title,
             "description": p.description,
             "proposal_type": p.proposal_type,
-            "votes_for": result["votes_for"],
-            "votes_against": result["votes_against"],
-            "approved": result["approved"],
+            "votes_for": votes_for,
+            "votes_against": votes_against,
+            "total_weight": total_weight,
+
+            # IMPORTANT: return DB status
+            "status": p.status,
         })
 
     return Response(response)
+@api_view(["POST"])
+def create_property_proposals(request, pk):
+    try:
+        property_obj = Property.objects.get(id=pk)
+    except Property.DoesNotExist:
+        return Response(
+            {"error": "Property not found"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
 
+    serializer = ProposalSerializer(data=request.data)
 
+    if serializer.is_valid():
+        serializer.save(property=property_obj)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+def check_proposal_result(proposal):
+
+    if proposal.status != "ACTIVE":
+        return
+
+    votes = Vote.objects.filter(proposal=proposal)
+
+    for_tokens = votes.filter(vote=True).aggregate(
+        Sum("tokens_used")
+    )["tokens_used__sum"] or 0
+
+    against_tokens = votes.filter(vote=False).aggregate(
+        Sum("tokens_used")
+    )["tokens_used__sum"] or 0
+
+    total_tokens = Ownership.objects.filter(
+        property=proposal.property
+    ).aggregate(
+        Sum("tokens_owned")
+    )["tokens_owned__sum"] or 0
+
+    print(f"total tokens {total_tokens}, for: {for_tokens}, against: {against_tokens}")
+
+    if for_tokens > total_tokens / 2:
+        proposal.status = "APPROVED"
+        proposal.save()
+
+    elif against_tokens > total_tokens / 2:
+        proposal.status = "REJECTED"
+        proposal.save()
 @api_view(['POST'])
 def vote_on_proposal(request, proposal_id):
-    user = request.user if request.user.is_authenticated else User.objects.first()
-    vote_choice = request.data.get("vote")
 
-    proposal = Proposal.objects.get(id=proposal_id)
-    cast_vote(proposal, user, vote_choice)
+    vote_choice = request.data.get("vote")
+    wallet_address = request.data.get("wallet_address")
+
+    try:
+        proposal = Proposal.objects.get(id=proposal_id)
+    except Proposal.DoesNotExist:
+        return Response({"error": "Proposal not found"}, status=404)
+
+    try:
+        cast_vote(proposal, wallet_address, vote_choice)
+    except Exception as e:
+        return Response({"error": str(e)}, status=400)
 
     return Response({"status": "vote recorded"})
-
 # properties/views.py
 
 @api_view(['POST'])
