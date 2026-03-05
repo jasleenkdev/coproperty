@@ -53,7 +53,7 @@ def mint_tokens(to_address, amount):
             private_key=settings.PRIVATE_KEY
         )
 
-        tx_hash = w3.eth.send_raw_transaction(signed_txn.raw_transaction)
+        tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
         receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
 
         if receipt.status != 1:

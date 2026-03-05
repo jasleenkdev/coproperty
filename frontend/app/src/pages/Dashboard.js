@@ -90,11 +90,18 @@ export default function Dashboard() {
           rent += netMonthlyRent;
 
           // Calculate historical payouts
+        // Calculate historical payouts
+          // Calculate historical payouts
           const userPayouts = payouts.filter(
             (p) =>
-              p.wallet_address?.toLowerCase() === account?.toLowerCase() ||
-              p.user === userOwnership.user,
+              // 1. Check if the nested user object's username matches (the wallet)
+              p.user_username?.toLowerCase() === account?.toLowerCase() ||
+              // 2. Check the investor_name field we added to the serializer
+              p.investor_name?.toLowerCase() === account?.toLowerCase() ||
+              // 3. Fallback check for raw user ID if needed
+              p.user === userOwnership.user
           );
+
           historical += userPayouts.reduce(
             (sum, p) => sum + parseFloat(p.amount || 0),
             0,
@@ -475,7 +482,9 @@ export default function Dashboard() {
                     <p className="font-medium text-gray-900">
                       Rent Payout Received
                     </p>
-                    <p className="text-gray-500 text-xs">This month</p>
+                    <p className="text-gray-500 text-xs">
+  {portfolio[0]?.ownership ? new Date(portfolio[0].ownership.month || Date.now()).toLocaleDateString("en-IN", { month: 'long', year: 'numeric' }) : "This month"}
+</p>
                   </div>
                   <span className="font-medium text-success-600">
                     +{formatCurrency(monthlyRent)}

@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from eth_account.messages import encode_defunct
 from eth_account import Account
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.db import IntegrityError
 
 from .models import (
     Property,
@@ -148,7 +149,9 @@ def property_payouts(request, pk):
 
 @api_view(['GET'])
 def wallet_payouts(request, wallet_address):
-    payouts = RentPayout.objects.filter(wallet_address=wallet_address)
+    # Notice the __iexact added to the end of user__username!
+    # This tells Django to ignore uppercase/lowercase differences.
+    payouts = RentPayout.objects.filter(user__username__iexact=wallet_address)
     serializer = RentPayoutSerializer(payouts, many=True)
     return Response(serializer.data)
 
@@ -238,16 +241,21 @@ def distribute_rent(request, pk):
         # 2. Calculate Share: (Tokens / 1000) * Net Rent
         # Note: TOTAL_TOKENS is 1000 based on your Ownership model logic
         share_amount = (ownership.tokens_owned / 1000) * net_rent
-        
         if share_amount > 0:
-            # 3. Create Payout (The unique_together constraint in your model 
-            # will prevent duplicate payouts for the same month)
-            RentPayout.objects.get_or_create(
-                user=user,
-                property=property_obj,
-                amount=share_amount
-                # month defaults to now in your model
-            )
-            payout_count += 1
+            try:
+                # Use 'defaults' so it only tries to set the amount if creating a new one
+                payout, created = RentPayout.objects.get_or_create(
+                    user=user,
+                    property=property_obj,
+                    defaults={'amount': share_amount}
+                )
+                
+                if created:
+                    payout_count += 1
+                    
+            except IntegrityError:
+                # If a payout already exists for this user/property/month, skip it
+                pass
+        
             
     return Response({"message": f"Successfully distributed rent to {payout_count} owners."})

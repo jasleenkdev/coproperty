@@ -152,11 +152,17 @@ export default function PropertyDetail({ property, onBack }) {
           </thead>
           <tbody>
             {ownerships.map((o, index) => (
-              <tr key={index}>
-                <td>User #{o.user}</td>
-                <td>{o.tokens_owned}</td>
-                <td>{o.ownership_percentage.toFixed(2)}%</td>
-              </tr>
+            <tr key={index}>
+  <td>
+    {o.investor_name && o.investor_name !== "Anonymous" && o.investor_name !== "Investor"
+      ? o.investor_name
+      : o.wallet_address
+        ? `${o.wallet_address.slice(0, 6)}...${o.wallet_address.slice(-4)}`
+        : `User #${o.user}`}
+  </td>
+  <td>{o.tokens_owned}</td>
+  <td>{o.ownership_percentage.toFixed(2)}%</td>
+</tr>
             ))}
           </tbody>
         </table>
@@ -180,13 +186,22 @@ export default function PropertyDetail({ property, onBack }) {
             </thead>
             <tbody>
               {payouts.map((p, index) => (
-                <tr key={index}>
-                  <td>User #{p.user}</td>
-                  <td>₹{p.amount}</td>
-                  <td>
-                    {new Date(p.month).toLocaleDateString()}
-                  </td>
-                </tr>
+               <tr key={index}>
+  <td>
+    {p.investor_name && p.investor_name !== "Anonymous" && p.investor_name !== "Investor"
+      ? p.investor_name
+      : `User #${p.user}`}
+  </td>
+  <td>₹{p.amount}</td>
+  <td>
+    {p.month 
+      ? new Date(p.month).toLocaleDateString("en-IN", {
+          month: "short",
+          year: "numeric",
+        })
+      : "Recent"}
+  </td>
+</tr>
               ))}
             </tbody>
           </table>
