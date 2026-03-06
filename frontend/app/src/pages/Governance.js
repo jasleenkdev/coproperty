@@ -23,9 +23,8 @@ import {
 
 const PROPOSAL_TYPES = [
   { value: "RENT_CHANGE", label: "Change Rent" },
-  { value: "MAINTENANCE", label: "Approve Maintenance" },
-  { value: "SELL", label: "Sell Property" },
-  { value: "BUY", label: "Buy New Property" },
+  { value: "MAINTENANCE_CHANGE", label: "Change Maintenance" },
+  { value: "PROPERTY_REVALUATION", label: "Change Property Value" }
 ];
 
 export default function Governance() {
@@ -377,7 +376,7 @@ function CreateProposalModal({ isOpen, onClose, properties, onSuccess }) {
         />
 
         <TextArea
-          label="Description"
+          label="New Value"
           rows={4}
           value={formData.description}
           onChange={(e) =>

@@ -71,9 +71,8 @@ class Proposal(models.Model):
 
     PROPOSAL_TYPES = [
         ('RENT_CHANGE', 'Change Rent'),
-        ('MAINTENANCE', 'Approve Maintenance'),
-        ('SELL', 'Sell Property'),
-        ('BUY', 'Buy New Property'),
+        ('MAINTENANCE_CHANGE', 'Change Maintenance'),
+        ('PROPERTY_REVALUATION', 'Change Property Value')
     ]
 
     property = models.ForeignKey(Property, on_delete=models.CASCADE)

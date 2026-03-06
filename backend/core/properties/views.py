@@ -295,6 +295,19 @@ def check_proposal_result(proposal):
 
     if for_tokens > total_tokens / 2:
         proposal.status = "APPROVED"
+        prop = proposal.property
+        value = float(proposal.description)
+
+        if proposal.proposal_type == "RENT_CHANGE":
+            prop.monthly_rent = value
+
+        elif proposal.proposal_type == "MAINTENANCE_CHANGE":
+            prop.maintenance_cost = value
+
+        elif proposal.proposal_type == "PROPERTY_REVALUATION":
+            prop.purchase_price = value
+
+        prop.save()
         proposal.save()
 
     elif against_tokens > total_tokens / 2:
