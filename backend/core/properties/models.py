@@ -1,7 +1,8 @@
 # properties/models.py
 from django.db import models
-from django.db import models
 from django.contrib.auth.models import User
+from django.utils.timezone import now
+
 
 class WalletNonce(models.Model):
     wallet_address = models.CharField(max_length=42, unique=True)
@@ -10,6 +11,7 @@ class WalletNonce(models.Model):
     def get_or_create_user(self):
         user, _ = User.objects.get_or_create(username=self.wallet_address)
         return user
+
 
 class Property(models.Model):
     name = models.CharField(max_length=100)
@@ -26,8 +28,6 @@ class Property(models.Model):
         return self.name
 
 
-from django.contrib.auth.models import User
-
 class Ownership(models.Model):
     wallet_address = models.CharField(max_length=42)
     property = models.ForeignKey(Property, on_delete=models.CASCADE)
@@ -43,17 +43,6 @@ class Ownership(models.Model):
     def __str__(self):
         return f"{self.wallet_address} owns {self.tokens_owned} tokens of {self.property.name}"
 
-class RentPayout(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    property = models.ForeignKey(Property, on_delete=models.CASCADE)
-    amount = models.FloatField()
-    month = models.DateField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.user.username} - {self.property.name} - ₹{self.amount}"
-
-
-from django.utils.timezone import now
 
 class RentPayout(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -66,6 +55,7 @@ class RentPayout(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.property.name} - {self.amount}"
+
 
 class Proposal(models.Model):
 
