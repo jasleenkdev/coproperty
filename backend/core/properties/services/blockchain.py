@@ -48,14 +48,11 @@ def mint_tokens(to_address, amount):
             "nonce": nonce,
         })
 
-        signed_txn = w3.eth.account.sign_transaction(
-            txn,
-            private_key=settings.PRIVATE_KEY
-        )
+        signed_tx = w3.eth.account.sign_transaction(txn, settings.PRIVATE_KEY)
 
-        tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+
         receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-
         if receipt.status != 1:
             raise Exception("Transaction reverted on-chain")
 
