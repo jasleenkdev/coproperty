@@ -1,4 +1,4 @@
-import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import { Route, BrowserRouter as Router, Routes, Navigate } from "react-router-dom";
 import "./App.css";
 import { WalletProvider } from "./blockchain/WalletContext";
 import { Layout } from "./components/layout/Layout";
@@ -13,7 +13,10 @@ function App() {
     <WalletProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<Auth />} />
+
+          {/* redirect root */}
+          <Route path="/" element={<Navigate to="/properties" />} />
+
           <Route
             path="/*"
             element={
@@ -27,6 +30,7 @@ function App() {
               </Layout>
             }
           />
+
         </Routes>
       </Router>
     </WalletProvider>
