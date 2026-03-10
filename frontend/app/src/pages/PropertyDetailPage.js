@@ -439,8 +439,8 @@ export default function PropertyDetail() {
                     {payouts.slice(0, 10).map((p, index) => (
                       <tr key={index} className="text-sm">
                        <td className="py-3 text-gray-700 font-medium">
-                          {p.investor_name && p.investor_name !== "Anonymous" && p.investor_name !== "Investor"
-                            ? p.investor_name
+                          {p.user_username && p.user_username !== "Anonymous" && p.user_username !== "Investor"
+                            ? p.user_username
                             : typeof p.user === 'string'
                               ? `${p.user.slice(0, 6)}...${p.user.slice(-4)}`
                               : "Unknown"}

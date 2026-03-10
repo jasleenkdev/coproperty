@@ -1,6 +1,6 @@
 from decimal import Decimal
 from rest_framework import serializers
-from .models import Property, Ownership, RentPayout
+from .models import Property, Ownership, RentPayout, WalletUser
 
 
 # ==============================
@@ -48,10 +48,12 @@ class OwnershipSerializer(serializers.ModelSerializer):
     def get_investor_name(self, obj):
         try:
             # Assuming the wallet_address is saved as the username in Django
-            from django.contrib.auth.models import User
-            user = User.objects.get(username=obj.wallet_address)
-            # Return their first name, or fallback to "Investor"
-            return user.first_name if user.first_name else "Investor"
+    
+            wallet_user = WalletUser.objects.get(wallet_address=obj.wallet_address)
+
+            user = wallet_user.user
+
+            return user.username if user.username else "Anonymous"
         except:
             return "Anonymous"
 

@@ -9,10 +9,12 @@ from .views import (
     wallet_payouts,
     property_proposals,
     vote_on_proposal,
-    buy_tokens,   # ✅ NEW
+    buy_tokens,  
     distribute_rent,
     create_property_proposals,
-    property_create
+    property_create,
+    wallet_login,
+    register_wallet_user
 )
 
 urlpatterns = [
@@ -38,5 +40,7 @@ urlpatterns = [
     path('properties/<int:pk>/create/proposals/', create_property_proposals),
     path('proposals/<int:proposal_id>/vote/', vote_on_proposal),
 
-    path('properties/<int:pk>/distribute-rent/', distribute_rent), # ✅ NEW
+    path('properties/<int:pk>/distribute-rent/', distribute_rent), 
+     path("wallet/login/", wallet_login),
+    path("wallet/register/", register_wallet_user),
 ]

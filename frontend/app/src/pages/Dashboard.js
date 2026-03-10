@@ -20,7 +20,7 @@ import {
 } from "../components/ui";
 
 export default function Dashboard() {
-  const { account, isConnected } = useWallet();
+  const { account,username, isConnected } = useWallet();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -173,7 +173,7 @@ export default function Dashboard() {
     <div>
       <PageHeader
         title="Investment Dashboard"
-        description={`Wallet: ${account.slice(0, 8)}...${account.slice(-6)}`}
+        description={`👤 ${username} | ${account.slice(0, 8)}...${account.slice(-6)}`}
       />
 
       {/* Summary Stats */}

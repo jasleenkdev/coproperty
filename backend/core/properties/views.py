@@ -16,7 +16,8 @@ from .models import (
     RentPayout,
     Proposal,
     Vote,
-    WalletNonce
+    WalletNonce,
+    WalletUser
 )
 
 from .serializers import (
@@ -148,9 +149,7 @@ def property_ownership(request, pk):
 
     ownerships = Ownership.objects.filter(property_id=pk)
     serializer = OwnershipSerializer(ownerships, many=True)
-    print(ownerships)
-    print(serializer.data)
-   
+    print(f'Ownership data: {serializer.data}')
     return Response(serializer.data)
 
 
@@ -158,6 +157,7 @@ def property_ownership(request, pk):
 def property_payouts(request, pk):
     payouts = RentPayout.objects.filter(property_id=pk)
     serializer = RentPayoutSerializer(payouts, many=True)
+    print(f'payout data is {serializer.data}')
     return Response(serializer.data)
 
 
@@ -293,7 +293,7 @@ def check_proposal_result(proposal):
 
     print(f"total tokens {total_tokens}, for: {for_tokens}, against: {against_tokens}")
 
-    if for_tokens > total_tokens / 2:
+    if for_tokens >= total_tokens / 2:
         proposal.status = "APPROVED"
         prop = proposal.property
         value = float(proposal.description)
@@ -331,46 +331,99 @@ def vote_on_proposal(request, proposal_id):
 
     return Response({"status": "vote recorded"})
 # properties/views.py
-
 @api_view(['POST'])
 def distribute_rent(request, pk):
     property_obj = get_object_or_404(Property, pk=pk)
-    
-    # Calculate Net Rent
+
     net_rent = property_obj.monthly_rent - property_obj.maintenance_cost
-    
-    # Get all owners
+
     ownerships = Ownership.objects.filter(property=property_obj)
-    
+
     payout_count = 0
+
     for ownership in ownerships:
-        # 1. Find the User associated with this wallet address
-        # Your WalletNonce model has a helper for this
+
         try:
-            nonce_obj = WalletNonce.objects.get(wallet_address=ownership.wallet_address)
-            user = nonce_obj.get_or_create_user()
-        except WalletNonce.DoesNotExist:
-            # Fallback if no nonce object exists (useful for admin-created data)
+            wallet_user = WalletUser.objects.get(wallet_address=ownership.wallet_address)
+            user = wallet_user.user
+        except WalletUser.DoesNotExist:
             user, _ = User.objects.get_or_create(username=ownership.wallet_address)
 
-        # 2. Calculate Share: (Tokens / 1000) * Net Rent
-        # Note: TOTAL_TOKENS is 1000 based on your Ownership model logic
         share_amount = (ownership.tokens_owned / 1000) * net_rent
+
         if share_amount > 0:
-            try:
-                # Use 'defaults' so it only tries to set the amount if creating a new one
-                payout, created = RentPayout.objects.get_or_create(
-                    user=user,
-                    property=property_obj,
-                    defaults={'amount': share_amount}
-                )
-                
-                if created:
-                    payout_count += 1
-                    
-            except IntegrityError:
-                # If a payout already exists for this user/property/month, skip it
-                pass
-        
-            
-    return Response({"message": f"Successfully distributed rent to {payout_count} owners."})
+            payout, created = RentPayout.objects.get_or_create(
+                user=user,
+                property=property_obj,
+                defaults={"amount": share_amount}
+            )
+
+            if created:
+                payout_count += 1
+
+    return Response({
+        "message": f"Successfully distributed rent to {payout_count} owners."
+    })
+@api_view(["POST"])
+def wallet_login(request):
+
+    wallet_address = request.data.get("wallet_address")
+    password = request.data.get("password")
+
+    try:
+        wallet_user = WalletUser.objects.get(wallet_address=wallet_address)
+        user = wallet_user.user
+
+        # First call (just checking wallet)
+        if not password:
+            return Response({
+                "exists": True,
+                "require_password": True,
+                "username": user.username   # IMPORTANT
+            })
+
+        # Second call (password verification)
+        if user.check_password(password):
+            return Response({
+                "success": True,
+                "username": user.username
+            })
+        else:
+            return Response({
+                "success": False,
+                "error": "Invalid password"
+            }, status=401)
+
+    except WalletUser.DoesNotExist:
+
+        return Response({
+            "exists": False
+        })
+@api_view(["POST"])
+def register_wallet_user(request):
+
+    wallet_address = request.data.get("wallet_address")
+    username = request.data.get("username")
+    password = request.data.get("password")
+
+    if not wallet_address or not username or not password:
+        return Response({"error": "wallet_address, username and password required"}, status=400)
+
+    if WalletUser.objects.filter(wallet_address=wallet_address).exists():
+        return Response({"error": "Wallet already registered"}, status=400)
+
+    if User.objects.filter(username=username).exists():
+        return Response({"error": "Username already exists"}, status=400)
+
+    user = User.objects.create(username=username)
+    user.set_password(password)
+    user.save()
+
+    WalletUser.objects.create(
+        user=user,
+        wallet_address=wallet_address
+    )
+
+    return Response({
+        "message": "User created successfully"
+    })

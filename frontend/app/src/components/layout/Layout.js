@@ -21,7 +21,7 @@ export function Layout({ children }) {
 
 function Navbar() {
   const location = useLocation();
- const { account, connectWallet, disconnectWallet, isConnected } = useWallet();
+ const { account,username, connectWallet, disconnectWallet, isConnected } = useWallet();
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
@@ -85,7 +85,7 @@ function Navbar() {
     <span className="w-2 h-2 bg-success-500 rounded-full" />
 
     <span className="text-sm font-medium text-success-700">
-      {account.slice(0, 6)}...{account.slice(-4)}
+     👤 {username} | {account.slice(0, 6)}...{account.slice(-4)}
     </span>
 
     <button

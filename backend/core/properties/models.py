@@ -96,3 +96,15 @@ class Vote(models.Model):
 
     def __str__(self):
         return f"{self.wallet_address} voted on {self.proposal.title}"
+
+# properties/models.py
+
+from django.contrib.auth.models import User
+from django.db import models
+
+class WalletUser(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    wallet_address = models.CharField(max_length=42, unique=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.wallet_address}"
