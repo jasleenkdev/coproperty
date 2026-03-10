@@ -11,12 +11,15 @@ async function main() {
     "Property A Token",
     "PROP_A",
     1,
-    deployer.address
+    deployer.address, 
+    {
+      gasLimit: 8000000
+    }
   );
 
   await contract.waitForDeployment();
 
-  const address = contract.target;   // ✅ Correct for ethers v6
+  const address = await contract.getAddress();
 
   console.log("Contract deployed at:", address);
 }
